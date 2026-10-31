@@ -1,0 +1,149 @@
+import { ArrowRightIcon, MapPinIcon, ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { useState, type FormEvent } from "react";
+
+import type { ApiError, PlanRequest } from "../lib/api";
+import { validateTripForm, type TripFormErrors } from "../lib/schema";
+import { DateTimeField } from "./ui/DateTimeField";
+import { Field } from "./ui/Field";
+import { SelectField } from "./ui/SelectField";
+
+interface Props {
+  isPending: boolean;
+  error: ApiError | null;
+  onSubmit: (request: PlanRequest) => void;
+}
+
+type Interval = 10 | 25 | 50;
+
+const INTERVAL_OPTIONS: { value: Interval; label: string }[] = [
+  { value: 10, label: "10 miles" },
+  { value: 25, label: "25 miles" },
+  { value: 50, label: "50 miles" },
+];
+
+const MAX_DAYS_AHEAD = 14;
+
+function defaultDeparture(): Date {
+  const next = new Date();
+  next.setHours(next.getHours() + 1, 0, 0, 0);
+  return next;
+}
+
+function startOfToday(): Date {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+}
+
+export function TripForm({ isPending, error, onSubmit }: Props) {
+  const [origin, setOrigin] = useState("Denver, CO");
+  const [destination, setDestination] = useState("Salt Lake City, UT");
+  const [departure, setDeparture] = useState<Date>(defaultDeparture);
+  const [loadWeightLb, setLoadWeightLb] = useState("42000");
+  const [intervalMiles, setIntervalMiles] = useState<Interval>(25);
+  const [errors, setErrors] = useState<TripFormErrors>({});
+
+  const minDate = startOfToday();
+  const maxDate = new Date(minDate);
+  maxDate.setDate(maxDate.getDate() + MAX_DAYS_AHEAD);
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const { values, errors: validationErrors } = validateTripForm({
+      origin,
+      destination,
+      departure,
+      loadWeightLb,
+      intervalMiles,
+    });
+    setErrors(validationErrors);
+    if (!values) return;
+    onSubmit({
+      origin: values.origin,
+      destination: values.destination,
+      departure_time: values.departure.toISOString(),
+      load_weight_lb: values.loadWeightLb,
+      checkpoint_interval_miles: values.intervalMiles,
+    });
+  }
+
+  const serverFieldError = (field: string) => error?.fieldErrors[field]?.[0];
+
+  return (
+    <form className="trip-form" onSubmit={handleSubmit} noValidate>
+      <Field id="origin" label="Origin" error={errors.origin ?? serverFieldError("origin")}>
+        <div className="input-wrap">
+          <MapPinIcon className="input-icon" aria-hidden />
+          <input
+            id="origin"
+            aria-labelledby="origin-label"
+            value={origin}
+            onChange={(e) => setOrigin(e.target.value)}
+            placeholder="City, address or lat,lon"
+            autoComplete="off"
+          />
+        </div>
+      </Field>
+
+      <Field id="destination" label="Destination" error={errors.destination ?? serverFieldError("destination")}>
+        <div className="input-wrap">
+          <MapPinIcon className="input-icon" aria-hidden />
+          <input
+            id="destination"
+            aria-labelledby="destination-label"
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
+            placeholder="City, address or lat,lon"
+            autoComplete="off"
+          />
+        </div>
+      </Field>
+
+      <Field id="departure" label="Departure" error={errors.departure ?? serverFieldError("departure_time")}>
+        <DateTimeField
+          value={departure}
+          onChange={setDeparture}
+          minDate={minDate}
+          maxDate={maxDate}
+          labelId="departure-label"
+        />
+      </Field>
+
+      <div className="field-row">
+        <Field id="load" label="Load weight (lb)" error={errors.loadWeightLb ?? serverFieldError("load_weight_lb")}>
+          <div className="input-wrap">
+            <ScaleIcon className="input-icon" aria-hidden />
+            <input
+              id="load"
+              aria-labelledby="load-label"
+              type="text"
+              inputMode="numeric"
+              value={loadWeightLb}
+              onChange={(e) => setLoadWeightLb(e.target.value.replace(/[^\d]/g, ""))}
+            />
+          </div>
+        </Field>
+        <Field id="interval" label="Checkpoint every" error={serverFieldError("checkpoint_interval_miles")}>
+          <SelectField
+            value={intervalMiles}
+            options={INTERVAL_OPTIONS}
+            onChange={setIntervalMiles}
+            labelId="interval-label"
+            icon={Squares2X2Icon}
+          />
+        </Field>
+      </div>
+
+      {error && Object.keys(error.fieldErrors).length === 0 && (
+        <p className="form-error" role="alert">
+          {error.message}
+        </p>
+      )}
+
+      <button type="submit" className="primary" disabled={isPending}>
+        {isPending ? "Checking weather along routes…" : "Find safest route"}
+        {!isPending && <ArrowRightIcon className="btn-icon" aria-hidden />}
+      </button>
+    </form>
+  );
+}
