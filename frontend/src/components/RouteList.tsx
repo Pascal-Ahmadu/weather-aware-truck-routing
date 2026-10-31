@@ -1,6 +1,7 @@
-import { CheckBadgeIcon, ExclamationTriangleIcon, InformationCircleIcon } from "@heroicons/react/20/solid";
+import { CheckBadgeIcon, ExclamationTriangleIcon, InformationCircleIcon, SparklesIcon } from "@heroicons/react/20/solid";
 
 import type { PlannedRoute } from "../lib/api";
+import { explainRecommendation } from "../lib/explain";
 import { formatDateTime, formatDuration, formatMiles } from "../lib/format";
 import { riskColor, riskLabel, summaryBands } from "../lib/risk";
 
@@ -13,8 +14,8 @@ interface Props {
 export function RouteList({ routes, selectedId, onSelect }: Props) {
   return (
     <ol className="route-list">
-      {routes.map((route) => (
-        <li key={route.id}>
+      {routes.map((route, index) => (
+        <li key={route.id} className="route-item" style={{ animationDelay: `${index * 70}ms` }}>
           <button
             type="button"
             className={`route-card${route.id === selectedId ? " selected" : ""}`}
@@ -24,7 +25,8 @@ export function RouteList({ routes, selectedId, onSelect }: Props) {
             <div className="route-card-header">
               <span className="rank">#{route.rank}</span>
               <span className="route-title">
-                {formatMiles(route.distance_miles)} · {formatDuration(route.duration_seconds)}
+                <strong>{formatDuration(route.duration_seconds)}</strong>
+                <span className="route-distance"> · {formatMiles(route.distance_miles)}</span>
               </span>
               {route.recommended && (
                 <span className="badge recommended">
@@ -34,7 +36,7 @@ export function RouteList({ routes, selectedId, onSelect }: Props) {
               )}
             </div>
 
-            <RiskBar route={route} />
+            <RiskStrip route={route} />
 
             <dl className="route-stats">
               <div>
@@ -55,6 +57,12 @@ export function RouteList({ routes, selectedId, onSelect }: Props) {
               </div>
             </dl>
 
+            {route.recommended && (
+              <p className="route-why">
+                <SparklesIcon className="inline-icon" aria-hidden />
+                {explainRecommendation(route, routes).join(" · ")}
+              </p>
+            )}
             {route.summary.no_travel_miles > 0 && (
               <p className="route-warning">
                 <ExclamationTriangleIcon className="inline-icon" aria-hidden />
@@ -74,16 +82,31 @@ export function RouteList({ routes, selectedId, onSelect }: Props) {
   );
 }
 
-function RiskBar({ route }: { route: PlannedRoute }) {
-  const bands = summaryBands(route.summary);
+/**
+ * Risk along the route in driving order: one segment per checkpoint, width = miles to
+ * the next checkpoint, colour = risk at that checkpoint's ETA. Falls back to the
+ * miles-by-level summary when checkpoints are not available.
+ */
+function RiskStrip({ route }: { route: PlannedRoute }) {
+  const segments = route.checkpoints
+    .filter((cp) => cp.segment_miles > 0)
+    .map((cp) => ({ key: cp.index, miles: cp.segment_miles, level: cp.risk?.level ?? null, mile: cp.mile }));
+  const bands = segments.length
+    ? segments
+    : summaryBands(route.summary).map((b, i) => ({ key: i, miles: b.miles, level: b.level, mile: null }));
   const total = bands.reduce((sum, band) => sum + band.miles, 0) || 1;
+
   return (
-    <div className="risk-bar" role="img" aria-label={bands.map((b) => `${riskLabel(b.level)} ${b.miles} mi`).join(", ")}>
+    <div
+      className="risk-bar"
+      role="img"
+      aria-label={`Risk along the route: ${bands.map((b) => `${riskLabel(b.level)} for ${b.miles} mi`).join(", ")}`}
+    >
       {bands.map((band) => (
         <span
-          key={String(band.level)}
+          key={band.key}
           style={{ width: `${(band.miles / total) * 100}%`, background: riskColor(band.level) }}
-          title={`${riskLabel(band.level)}: ${band.miles} mi`}
+          title={band.mile === null ? `${riskLabel(band.level)}: ${band.miles} mi` : `Mile ${band.mile}: ${riskLabel(band.level)}`}
         />
       ))}
     </div>

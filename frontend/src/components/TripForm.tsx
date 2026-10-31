@@ -1,6 +1,6 @@
 import { ExclamationCircleIcon } from "@heroicons/react/16/solid";
-import { ArrowRightIcon, ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
-import { useState, type FormEvent } from "react";
+import { ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { useEffect, useState, type FormEvent } from "react";
 
 import type { ApiError, PlanRequest } from "../lib/api";
 import { validateTripForm, type TripFormErrors } from "../lib/schema";
@@ -9,9 +9,18 @@ import { Field } from "./ui/Field";
 import { LocationField, type LocationValue } from "./ui/LocationField";
 import { SelectField } from "./ui/SelectField";
 
+export interface TripPreset {
+  origin: string;
+  destination: string;
+  loadWeightLb: number;
+  /** Changes on every pick so the same preset can be applied twice. */
+  token: number;
+}
+
 interface Props {
   isPending: boolean;
   error: ApiError | null;
+  preset?: TripPreset | null;
   onSubmit: (request: PlanRequest) => void;
 }
 
@@ -37,13 +46,21 @@ function startOfToday(): Date {
   return today;
 }
 
-export function TripForm({ isPending, error, onSubmit }: Props) {
+export function TripForm({ isPending, error, preset, onSubmit }: Props) {
   const [origin, setOrigin] = useState<LocationValue>({ text: "Denver, CO", coords: null });
   const [destination, setDestination] = useState<LocationValue>({ text: "Salt Lake City, UT", coords: null });
   const [departure, setDeparture] = useState<Date>(defaultDeparture);
   const [loadWeightLb, setLoadWeightLb] = useState("42000");
   const [intervalMiles, setIntervalMiles] = useState<Interval>(25);
   const [errors, setErrors] = useState<TripFormErrors>({});
+
+  useEffect(() => {
+    if (!preset) return;
+    setOrigin({ text: preset.origin, coords: null });
+    setDestination({ text: preset.destination, coords: null });
+    setLoadWeightLb(String(preset.loadWeightLb));
+    setErrors({});
+  }, [preset]);
 
   const minDate = startOfToday();
   const maxDate = new Date(minDate);
@@ -132,7 +149,6 @@ export function TripForm({ isPending, error, onSubmit }: Props) {
 
       <button type="submit" className="primary" disabled={isPending}>
         {isPending ? "Checking weather along routes…" : "Find safest route"}
-        {!isPending && <ArrowRightIcon className="btn-icon" aria-hidden />}
       </button>
     </form>
   );

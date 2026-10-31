@@ -8,6 +8,7 @@ import { formatDateTime, formatTime } from "../lib/format";
 import { riskColor } from "../lib/risk";
 import { CorridorHeatLayer } from "./CorridorHeatLayer";
 import { RiskBadge } from "./RiskBadge";
+import { ZoomControl } from "./ZoomControl";
 
 interface Props {
   routes: PlannedRoute[];
@@ -20,20 +21,28 @@ interface Props {
 }
 
 const US_CENTER: [number, number] = [39.5, -98.35];
+const TRANSPARENT_TILE = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+
+// Request tiles only when movement ends: aborted mid-animation loads otherwise leave a
+// scaled parent tile (a giant blurry label) stuck on screen until the next pan.
+const TILE_LOADING = { updateWhenZooming: false, updateWhenIdle: true, keepBuffer: 3, errorTileUrl: TRANSPARENT_TILE };
 
 export function RouteMap({ routes, selectedId, corridor, hour, showHeatmap, endpoints, onSelect }: Props) {
   return (
-    <MapContainer center={US_CENTER} zoom={4} className="map" preferCanvas scrollWheelZoom>
+    <MapContainer center={US_CENTER} zoom={4} className="map" preferCanvas scrollWheelZoom zoomControl={false}>
       <TileLayer
         attribution="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, OpenStreetMap contributors"
         url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
         maxZoom={16}
+        {...TILE_LOADING}
       />
       <TileLayer
         url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
         maxZoom={16}
         pane="shadowPane"
+        {...TILE_LOADING}
       />
+      <ZoomControl />
       <FitToRoutes routes={routes} />
       <CorridorHeatLayer segments={corridor} hour={hour} visible={showHeatmap} />
 
@@ -51,7 +60,7 @@ export function RouteMap({ routes, selectedId, corridor, hour, showHeatmap, endp
       {endpoints && (
         <>
           <EndpointPin location={endpoints.origin} label="Origin" />
-          <EndpointPin location={endpoints.destination} label="Destination" />
+          <EndpointPin location={endpoints.destination} label="Destination" pulse />
         </>
       )}
     </MapContainer>
@@ -69,15 +78,31 @@ function RouteLayer({
 }) {
   return (
     <>
+      {selected && (
+        <Polyline
+          positions={route.geometry}
+          interactive={false}
+          pathOptions={{ color: "#ffffff", weight: 11, opacity: 0.9, lineCap: "round", lineJoin: "round" }}
+        />
+      )}
       <Polyline
         positions={route.geometry}
         pathOptions={{
           color: selected ? "#11899a" : "#8a8884",
           weight: selected ? 6 : 4,
           opacity: selected ? 0.95 : 0.55,
+          lineCap: "round",
+          lineJoin: "round",
         }}
         eventHandlers={{ click: () => onSelect(route.id) }}
-      />
+      >
+        {!selected && (
+          <Tooltip sticky direction="top" opacity={1} className="card-tooltip">
+            <div className="card-title">Route #{route.rank}</div>
+            <div className="card-subtitle">Click to compare</div>
+          </Tooltip>
+        )}
+      </Polyline>
       {route.checkpoints.map((checkpoint) => (
         <CheckpointMarker key={checkpoint.index} checkpoint={checkpoint} selected={selected} />
       ))}
@@ -88,9 +113,7 @@ function RouteLayer({
 function CheckpointMarker({ checkpoint, selected }: { checkpoint: Checkpoint; selected: boolean }) {
   const level = checkpoint.risk?.level ?? null;
   const weather = checkpoint.weather;
-  const detail = weather
-    ? `${weather.wind_mph.toFixed(0)} mph wind`
-    : undefined;
+  const detail = weather ? `${weather.wind_mph.toFixed(0)} mph wind` : undefined;
 
   return (
     <CircleMarker
@@ -142,17 +165,22 @@ const PIN_SVG = `
   <circle cx="14" cy="13.5" r="4.5" fill="#ffffff"/>
 </svg>`;
 
-const PIN_ICON = L.divIcon({
-  className: "pin-icon",
-  html: PIN_SVG,
-  iconSize: [28, 36],
-  iconAnchor: [14, 35],
-  tooltipAnchor: [0, -30],
-});
+function pinIcon(pulse: boolean) {
+  return L.divIcon({
+    className: `pin-icon${pulse ? " pin-pulse" : ""}`,
+    html: PIN_SVG,
+    iconSize: [28, 36],
+    iconAnchor: [14, 35],
+    tooltipAnchor: [0, -30],
+  });
+}
 
-function EndpointPin({ location, label }: { location: LocationInfo; label: string }) {
+const PIN = pinIcon(false);
+const PIN_PULSING = pinIcon(true);
+
+function EndpointPin({ location, label, pulse = false }: { location: LocationInfo; label: string; pulse?: boolean }) {
   return (
-    <Marker position={[location.lat, location.lon]} icon={PIN_ICON} zIndexOffset={1000}>
+    <Marker position={[location.lat, location.lon]} icon={pulse ? PIN_PULSING : PIN} zIndexOffset={1000}>
       <Tooltip direction="top" opacity={1} className="card-tooltip">
         <div className="card-title">{label}</div>
         <div className="card-subtitle">{location.name.split(",").slice(0, 2).join(",")}</div>
@@ -169,7 +197,10 @@ function FitToRoutes({ routes }: { routes: PlannedRoute[] }) {
   }, [routes]);
 
   useEffect(() => {
-    if (bounds) map.fitBounds(bounds, { padding: [40, 40] });
+    if (!bounds) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) map.fitBounds(bounds, { padding: [48, 48] });
+    else map.flyToBounds(bounds, { padding: [48, 48], duration: 0.9 });
   }, [map, bounds]);
 
   return null;

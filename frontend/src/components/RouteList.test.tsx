@@ -41,7 +41,8 @@ describe("RouteList", () => {
     expect(within(cards[1]!).queryByText("Recommended")).not.toBeInTheDocument();
     expect(cards[0]).toHaveAttribute("aria-pressed", "true");
     expect(cards[1]).toHaveAttribute("aria-pressed", "false");
-    expect(within(cards[0]!).getByText("519 mi · 9h 1m")).toBeInTheDocument();
+    expect(within(cards[0]!).getByText("9h 1m")).toBeInTheDocument();
+    expect(cards[0]).toHaveTextContent("519 mi");
   });
 
   it("shows the ranking numbers a reviewer needs to verify the recommendation", () => {

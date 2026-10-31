@@ -1,25 +1,39 @@
 import { TruckIcon } from "@heroicons/react/24/outline";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
+import { EmptyState } from "./components/EmptyState";
 import { ForecastSlider } from "./components/ForecastSlider";
+import { PlanningProgress } from "./components/PlanningProgress";
+import { RiskBadge } from "./components/RiskBadge";
 import { RiskLegend } from "./components/RiskLegend";
 import { RouteList } from "./components/RouteList";
 import { RouteMap } from "./components/RouteMap";
-import { TripForm } from "./components/TripForm";
+import { TripForm, type TripPreset } from "./components/TripForm";
 import { usePlanTrip } from "./hooks/usePlanTrip";
 import type { PlanRequest } from "./lib/api";
 import { buildCorridorSegments } from "./lib/corridor";
+import type { ExampleTrip } from "./lib/examples";
+import { worstRiskAtEta, worstRiskByHour } from "./lib/explain";
 import { formatDateTime } from "./lib/format";
+
+function defaultDepartureIso(): string {
+  const next = new Date();
+  next.setHours(next.getHours() + 1, 0, 0, 0);
+  return next.toISOString();
+}
 
 export default function App() {
   const plan = usePlanTrip();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hour, setHour] = useState(0);
   const [showHeatmap, setShowHeatmap] = useState(true);
+  const [preset, setPreset] = useState<TripPreset | null>(null);
+  const startedAt = useRef(0);
 
   const result = plan.data ?? null;
   const routes = useMemo(() => result?.routes ?? [], [result]);
   const activeId = selectedId ?? result?.recommended_route_id ?? null;
+  const activeRoute = routes.find((r) => r.id === activeId) ?? null;
 
   // Selected route last so its corridor paints on top where routes share a road.
   const corridor = useMemo(
@@ -30,14 +44,36 @@ export default function App() {
     [routes, activeId],
   );
 
+  const riskByHour = useMemo(
+    () => (activeRoute && result ? worstRiskByHour(activeRoute, result.forecast_hours.length) : []),
+    [activeRoute, result],
+  );
+
   const submit = useCallback(
     (request: PlanRequest) => {
       setSelectedId(null);
       setHour(0);
+      startedAt.current = Date.now();
       plan.mutate(request);
     },
     [plan],
   );
+
+  const pickExample = useCallback(
+    (trip: ExampleTrip) => {
+      setPreset({ origin: trip.origin, destination: trip.destination, loadWeightLb: trip.loadWeightLb, token: Date.now() });
+      submit({
+        origin: trip.origin,
+        destination: trip.destination,
+        departure_time: defaultDepartureIso(),
+        load_weight_lb: trip.loadWeightLb,
+        checkpoint_interval_miles: 25,
+      });
+    },
+    [submit],
+  );
+
+  const recommended = routes.find((r) => r.recommended) ?? null;
 
   return (
     <div className="app">
@@ -50,29 +86,34 @@ export default function App() {
           <p>Compare routes by forecast risk at the hour your truck actually arrives at each checkpoint.</p>
         </header>
 
-        <TripForm isPending={plan.isPending} error={plan.error} onSubmit={submit} />
+        <TripForm isPending={plan.isPending} error={plan.error} preset={preset} onSubmit={submit} />
 
-        {plan.isPending && (
-          <div className="status" role="status">
-            <span className="spinner" /> Routing, then sampling the forecast at every checkpoint…
-          </div>
-        )}
+        {plan.isPending && <PlanningProgress startedAt={startedAt.current} />}
 
-        {result && (
+        {result && !plan.isPending && (
           <section className="results">
-            <h2>
-              {result.routes.length} route{result.routes.length === 1 ? "" : "s"}
-              <small>
-                {result.query.origin.name.split(",")[0]} → {result.query.destination.name.split(",")[0]} ·{" "}
-                {formatDateTime(result.query.departure_time)} · {result.query.load_weight_lb.toLocaleString()} lb
-              </small>
-            </h2>
+            <div className="results-header">
+              <h2>
+                {result.routes.length} route{result.routes.length === 1 ? "" : "s"}
+                <small>
+                  {result.query.origin.name.split(",")[0]} → {result.query.destination.name.split(",")[0]} ·{" "}
+                  {formatDateTime(result.query.departure_time)} · {result.query.load_weight_lb.toLocaleString()} lb
+                </small>
+              </h2>
+              {recommended && (
+                <div className="results-worst" title="Worst checkpoint risk on the recommended route">
+                  <RiskBadge level={worstRiskAtEta(recommended)} detail="worst on #1" />
+                </div>
+              )}
+            </div>
             <RouteList routes={result.routes} selectedId={activeId ?? ""} onSelect={setSelectedId} />
             <p className="ranking-note">
               Ranked by fewest No Travel miles, then Severe miles, High miles, lowest average risk, shortest time.
             </p>
           </section>
         )}
+
+        {!result && !plan.isPending && <EmptyState onPick={pickExample} />}
       </aside>
 
       <main className="map-panel">
@@ -94,15 +135,14 @@ export default function App() {
               hours={result.forecast_hours}
               hour={hour}
               showHeatmap={showHeatmap}
+              riskByHour={riskByHour}
               onHourChange={setHour}
               onToggleHeatmap={setShowHeatmap}
             />
           </div>
         )}
         {!result && !plan.isPending && (
-          <div className="map-overlay center empty-state">
-            Enter a trip to see routes, checkpoints and the weather heatmap.
-          </div>
+          <div className="map-overlay center map-hint">Routes, checkpoints and the weather corridor appear here.</div>
         )}
       </main>
     </div>

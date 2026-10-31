@@ -103,7 +103,15 @@ Mobile (< 860px): sidebar stacks on top (max 55vh, scrolls), map below at 70vh, 
 
 **Legend** — top-right overlay, six rows of 12px swatch + label.
 
-**States** — empty: centred muted text "Enter a trip to see routes, checkpoints and the weather heatmap." Loading: spinner + one line in the sidebar; map stays interactive. Error: message under the form; never a blank map.
+**Forecast playback** — a round Accent **Play/Pause** button beside the slider auto-scrubs 0→48 h (220 ms per hour, loops). Above the track, a **risk sparkline**: 49 thin bars, one per hour, coloured by the worst risk anywhere on the selected route at that hour (`#E5E7EB` when unknown); the current hour is taller; clicking a bar jumps to it.
+
+**Route card extras** — the risk bar is in *driving order* (one segment per checkpoint, width = miles to the next, colour = risk at ETA). The recommended card ends with a one-line "why" in Accent-strong (e.g. "No Severe or High weather at your ETAs · Fastest option"), derived from the same numbers the ranking used. Cards rise in with a 70 ms stagger; hover lifts 1 px with a soft shadow.
+
+**Planning progress** — while the plan request runs: four steps (locate → route → sample forecast → rank) advancing on elapsed time, done steps as filled Accent dots with a check, the active step as a spinning ring, plus three shimmering skeleton cards. No bare spinner.
+
+**States** — empty: a dashed card in the sidebar, "Plan a trip to see routes, checkpoints and the 48-hour weather corridor." with pill **example-trip chips** (one click fills the form and plans), and a quiet hint centred on the map. Error: message under the form with an `ExclamationCircle` icon; never a blank map. All motion respects `prefers-reduced-motion`.
+
+**Map chrome** — custom zoom buttons (top-left, same card styling as overlays); the selected route has a white casing under the Accent-strong line; the destination pin pulses; fit-to-route uses an animated fly-to.
 
 ## Don'ts
 
