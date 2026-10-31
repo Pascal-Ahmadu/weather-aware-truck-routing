@@ -503,6 +503,25 @@ button.primary:disabled {
   cursor: progress;
 }
 
+button.primary:active:not(:disabled),
+button.secondary:active,
+.chip:active {
+  transform: scale(0.985);
+}
+
+/* Sidebar content rises in on first paint */
+.sidebar > * {
+  animation: rise-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.sidebar > :nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.sidebar > :nth-child(3) {
+  animation-delay: 120ms;
+}
+
 .status {
   display: flex;
   align-items: center;
@@ -643,6 +662,17 @@ button.primary:disabled {
   border-radius: 4px;
   overflow: hidden;
   background: var(--input-bg);
+  transform-origin: left center;
+  animation: fill-in 520ms 120ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes fill-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .route-stats {
@@ -941,7 +971,19 @@ button.primary:disabled {
   padding: 0;
   cursor: pointer;
   opacity: 0.8;
+  transform-origin: bottom;
   transition: height 120ms, opacity 120ms;
+  animation: grow-up 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 7ms);
+}
+
+@keyframes grow-up {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
 }
 
 .spark:hover {
@@ -1196,13 +1238,19 @@ button.primary:disabled {
   .skeleton-card,
   .skeleton-line,
   .pin-pulse::before,
-  .planning-step.active .planning-dot {
+  .planning-step.active .planning-dot,
+  .risk-bar,
+  .spark,
+  .pins-ready .pin-icon svg,
+  .sidebar > * {
     animation: none;
   }
 
   .route-card,
   .chip,
-  .play-button {
+  .play-button,
+  button.primary,
+  button.secondary {
     transition: none;
   }
 }
@@ -1314,6 +1362,22 @@ button.primary:disabled {
 .pin-icon svg {
   display: block;
   filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.18));
+  transform-origin: 50% 100%;
+}
+
+.pins-ready .pin-icon svg {
+  animation: pin-drop 480ms cubic-bezier(0.2, 0.9, 0.2, 1.15) both;
+}
+
+@keyframes pin-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .leaflet-container {

@@ -1,7 +1,8 @@
 import L from "leaflet";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
 
+import { useAnimatedValue } from "../hooks/useAnimatedValue";
 import type { Checkpoint, LocationInfo, PlannedRoute } from "../lib/api";
 import type { CorridorSegment } from "../lib/corridor";
 import { formatDateTime, formatTime } from "../lib/format";
@@ -44,6 +45,7 @@ export function RouteMap({ routes, selectedId, corridor, hour, showHeatmap, endp
       />
       <ZoomControl />
       <FitToRoutes routes={routes} />
+      <PanToSelected routes={routes} selectedId={selectedId} />
       <CorridorHeatLayer segments={corridor} hour={hour} visible={showHeatmap} />
 
       {routes
@@ -76,13 +78,16 @@ function RouteLayer({
   selected: boolean;
   onSelect: (id: string) => void;
 }) {
+  // When a route becomes selected its casing settles from wide to normal and its markers pop in.
+  const casingWeight = useAnimatedValue(18, 11, 450, selected ? route.id : null);
+  const markerRadius = useAnimatedValue(3, 7, 400, selected ? route.id : null);
   return (
     <>
       {selected && (
         <Polyline
           positions={route.geometry}
           interactive={false}
-          pathOptions={{ color: "#ffffff", weight: 11, opacity: 0.9, lineCap: "round", lineJoin: "round" }}
+          pathOptions={{ color: "#ffffff", weight: casingWeight, opacity: 0.9, lineCap: "round", lineJoin: "round" }}
         />
       )}
       <Polyline
@@ -104,13 +109,26 @@ function RouteLayer({
         )}
       </Polyline>
       {route.checkpoints.map((checkpoint) => (
-        <CheckpointMarker key={checkpoint.index} checkpoint={checkpoint} selected={selected} />
+        <CheckpointMarker
+          key={checkpoint.index}
+          checkpoint={checkpoint}
+          selected={selected}
+          radius={selected ? markerRadius : 4}
+        />
       ))}
     </>
   );
 }
 
-function CheckpointMarker({ checkpoint, selected }: { checkpoint: Checkpoint; selected: boolean }) {
+function CheckpointMarker({
+  checkpoint,
+  selected,
+  radius,
+}: {
+  checkpoint: Checkpoint;
+  selected: boolean;
+  radius: number;
+}) {
   const level = checkpoint.risk?.level ?? null;
   const weather = checkpoint.weather;
   const detail = weather ? `${weather.wind_mph.toFixed(0)} mph wind` : undefined;
@@ -118,7 +136,7 @@ function CheckpointMarker({ checkpoint, selected }: { checkpoint: Checkpoint; se
   return (
     <CircleMarker
       center={[checkpoint.lat, checkpoint.lon]}
-      radius={selected ? 7 : 4}
+      radius={radius}
       pathOptions={{
         color: "#ffffff",
         weight: selected ? 2 : 1,
@@ -189,6 +207,23 @@ function EndpointPin({ location, label, pulse = false }: { location: LocationInf
   );
 }
 
+/** Glide (same zoom, so no scaled tiles) to the route the user picked; skip the initial selection. */
+function PanToSelected({ routes, selectedId }: { routes: PlannedRoute[]; selectedId: string | null }) {
+  const map = useMap();
+  const previous = useRef<string | null>(null);
+
+  useEffect(() => {
+    const route = routes.find((r) => r.id === selectedId);
+    const isUserChange = previous.current !== null && previous.current !== selectedId;
+    previous.current = selectedId;
+    if (!route || !isUserChange || route.geometry.length === 0) return;
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    map.panTo(L.latLngBounds(route.geometry).getCenter(), { animate: !reduceMotion, duration: 0.5, easeLinearity: 0.3 });
+  }, [map, routes, selectedId]);
+
+  return null;
+}
+
 function FitToRoutes({ routes }: { routes: PlannedRoute[] }) {
   const map = useMap();
   const bounds = useMemo(() => {
@@ -198,6 +233,9 @@ function FitToRoutes({ routes }: { routes: PlannedRoute[] }) {
 
   useEffect(() => {
     if (!bounds) return;
+    // Pins drop in once the view has settled on the new plan.
+    map.getContainer().classList.remove("pins-ready");
+    requestAnimationFrame(() => map.getContainer().classList.add("pins-ready"));
     // Instant fit: an animated fly shows scaled, blurry tiles for its whole duration on a slow tile server.
     // On phones the summary strip (top) and slider (bottom) overlay the map, so fit into the band between them.
     const narrow = map.getSize().x < 860;

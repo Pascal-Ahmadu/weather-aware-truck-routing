@@ -115,7 +115,9 @@ Mobile (< 860px): **map first.** The map fills the viewport (`100dvh`, no page s
 
 **States** — empty: a dashed card in the sidebar, "Plan a trip to see routes, checkpoints and the 48-hour weather corridor." with pill **example-trip chips** (one click fills the form and plans), and a quiet hint centred on the map. Error: message under the form with an `ExclamationCircle` icon; never a blank map. All motion respects `prefers-reduced-motion`.
 
-**Map chrome** — custom zoom buttons (top-left, same card styling as overlays); the selected route has a white casing under the Accent-strong line; the destination pin pulses; fit-to-route uses an animated fly-to.
+**Map chrome** — custom zoom buttons (top-left, same card styling as overlays); the selected route has a white casing under the Accent-strong line; the destination pin pulses; fit-to-route is instant (an animated zoom shows scaled tiles on a slow tile server).
+
+**Motion** — short, eased, and never on the map's render loop for more than ~500 ms: pins drop in when a plan lands; picking a route glides the map (pan only, same zoom), its casing settles from 18 px to 11 px and its checkpoint dots pop from 3 px to 7 px; route cards rise in with a 70 ms stagger and their risk bars fill left-to-right; the 49 sparkline bars grow in a 7 ms-per-bar wave; sidebar blocks rise on first paint; buttons and chips press to 98.5 %. Everything is disabled under `prefers-reduced-motion`.
 
 ## Don'ts
 

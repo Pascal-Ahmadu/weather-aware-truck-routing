@@ -86,7 +86,7 @@ export function ForecastSlider({ hours, hour, showHeatmap, riskByHour, onHourCha
                 key={h}
                 type="button"
                 className={`spark${h === hour ? " current" : ""}`}
-                style={{ background: level === null ? "#e5e7eb" : riskColor(level) }}
+                style={{ background: level === null ? "#e5e7eb" : riskColor(level), "--i": h } as React.CSSProperties}
                 title={`+${h}h: ${riskLabel(level)}`}
                 aria-label={`Jump to +${h}h (${riskLabel(level)})`}
                 onClick={() => onHourChange(h)}
