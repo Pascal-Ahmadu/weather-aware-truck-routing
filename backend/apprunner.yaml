@@ -1,0 +1,22 @@
+# AWS App Runner source-based deployment (no Docker needed).
+# In the console: Source = GitHub repo, Source directory = backend, Configuration = "Use a configuration file".
+version: 1.0
+runtime: python311
+build:
+  commands:
+    build:
+      - pip install -r requirements.txt
+run:
+  runtime-version: 3.11
+  pre-run:
+    - python manage.py migrate --run-syncdb -v 0
+  command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 60
+  network:
+    port: 8000
+  env:
+    - name: PYTHONUNBUFFERED
+      value: "1"
+    - name: DEBUG
+      value: "False"
+  # Set SECRET_KEY, ALLOWED_HOSTS, CORS_ALLOWED_ORIGINS and NOMINATIM_USER_AGENT
+  # as App Runner environment variables (Secrets Manager for SECRET_KEY).
