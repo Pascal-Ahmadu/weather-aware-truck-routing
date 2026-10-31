@@ -780,6 +780,16 @@ button.secondary:active,
   display: inline-block;
 }
 
+.risk-legend.compact {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.7rem;
+}
+
 .forecast-slider {
   display: flex;
   flex-direction: column;

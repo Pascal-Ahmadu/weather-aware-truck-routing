@@ -1,8 +1,9 @@
 import { RISK_LEVELS, UNKNOWN_RISK_COLOR } from "../lib/risk";
 
-export function RiskLegend() {
+/** Colour key. `compact` lays the entries out in a wrapping row for narrow overlays. */
+export function RiskLegend({ compact = false }: { compact?: boolean }) {
   return (
-    <ul className="risk-legend" aria-label="Risk levels">
+    <ul className={`risk-legend${compact ? " compact" : ""}`} aria-label="Risk levels">
       {RISK_LEVELS.map((meta) => (
         <li key={meta.level}>
           <span className="swatch" style={{ background: meta.color }} />

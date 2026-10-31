@@ -156,6 +156,7 @@ export default function App() {
         )}
         {result && (
           <div className="map-overlay bottom">
+            {isMobile && <RiskLegend compact />}
             <ForecastSlider
               hours={result.forecast_hours}
               hour={hour}
