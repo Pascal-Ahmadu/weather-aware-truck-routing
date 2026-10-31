@@ -61,7 +61,16 @@ log "Configuring Caddy for https://${HOST}"
 cat > /etc/caddy/Caddyfile <<EOF
 ${HOST} {
     encode zstd gzip
-    reverse_proxy 127.0.0.1:8000
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+        -Server
+    }
+    reverse_proxy 127.0.0.1:8000 {
+        header_down -Server
+    }
 }
 EOF
 systemctl reload caddy || systemctl restart caddy
