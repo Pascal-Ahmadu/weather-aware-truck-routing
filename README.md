@@ -201,6 +201,19 @@ Also included: `backend/Dockerfile` (used by the script), `backend/apprunner.yam
 (source-based App Runner deploy from GitHub, no Docker), `amplify.yml`
 (Amplify CI from GitHub, monorepo-aware) and `render.yaml` as a non-AWS alternative.
 
+### Alternative: Vercel (both halves, zero infrastructure)
+
+Importing the repo into Vercel detects two projects. Configure them as:
+
+| Project | Root directory | Environment variables |
+|---|---|---|
+| API | `backend` | `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS=.vercel.app`, `CORS_ALLOWED_ORIGIN_REGEXES=^https://weather-aware-truck-routing.*\.vercel\.app$`, `NOMINATIM_USER_AGENT` |
+| Web | `frontend` | `VITE_API_BASE_URL=https://<api-project>.vercel.app` |
+
+`backend/vercel.json` routes every path to Django's WSGI app as a Python
+function. Expect a 1–2 s cold start after idle; the in-process weather cache
+does not persist between invocations (correctness is unaffected).
+
 ## Known limitations
 
 - OSRM's public demo server is rate-limited, uses a car profile, and does not
