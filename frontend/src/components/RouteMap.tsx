@@ -197,8 +197,15 @@ function FitToRoutes({ routes }: { routes: PlannedRoute[] }) {
   }, [routes]);
 
   useEffect(() => {
+    if (!bounds) return;
     // Instant fit: an animated fly shows scaled, blurry tiles for its whole duration on a slow tile server.
-    if (bounds) map.fitBounds(bounds, { padding: [48, 48], animate: false });
+    // On phones the summary strip (top) and slider (bottom) overlay the map, so fit into the band between them.
+    const narrow = map.getSize().x < 860;
+    map.fitBounds(bounds, {
+      paddingTopLeft: narrow ? [16, 180] : [48, 48],
+      paddingBottomRight: narrow ? [16, 200] : [48, 48],
+      animate: false,
+    });
   }, [map, bounds]);
 
   return null;

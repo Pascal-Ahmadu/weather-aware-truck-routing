@@ -81,7 +81,7 @@ Desktop (≥ 860px): two columns — **sidebar 420px** (scrolls) + **map fills t
 └────────────┴──────────────────────────────────────┘
 ```
 
-Mobile (< 860px): sidebar stacks on top (max 55vh, scrolls), map below at 70vh, legend hidden, slider stays docked at the bottom of the map.
+Mobile (< 860px): **map first.** The map fills the viewport (`100dvh`, no page scroll). A floating bar top-left of the map (beside the zoom buttons) holds a "Plan a trip" / "Change trip" secondary button and, after planning, the compact summary card. The form opens in a **bottom sheet** (full width, 16px top radius, ≤ 92dvh); results open as a bottom sheet too. The legend is hidden; the slider stays docked at the bottom. Fit-to-route pads for the strip and the slider so the route sits in the visible band between them.
 
 ## Components
 
