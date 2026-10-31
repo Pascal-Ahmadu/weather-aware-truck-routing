@@ -89,7 +89,8 @@ frontend/           React 19 + TypeScript + Vite · TanStack Query · react-leaf
 docs/ENGINEERING_GUIDELINES.md   the standards this code is held to
 docs/DESIGN_GUIDE.md             tokens, components and map-card spec the UI follows
 docs/DECISIONS.md                every judgment call, the alternative, and why
-infra/aws/deploy.sh              one-shot App Runner + Amplify deployment
+infra/aws/ec2-setup.sh           one-command EC2 provisioning (Docker + Caddy TLS) — the live setup
+infra/aws/deploy.sh              alternative: one-shot App Runner + Amplify deployment
 ```
 
 ## Running locally
@@ -182,50 +183,15 @@ Response (abridged):
 Errors are `{ "error": { "code", "detail" } }` with 400 (validation / location not
 found), 422 (no route), 503 (provider unavailable), 429 (rate limited).
 
-## Deployment (AWS)
+## Deployment
 
-The API runs as a container on **AWS App Runner** (HTTPS, autoscaling, health-checked
-on `/api/health/`) and the frontend is a static build on **AWS Amplify Hosting**.
-Nothing is persisted, so no database is provisioned; the weather cache is
-in-process (set `DATABASE_URL` + `CACHE_URL=dbcache://weather_cache` to share it
-across instances).
+**Live setup:** the API runs in Docker on a single **AWS EC2** instance behind
+**Caddy** (automatic Let's Encrypt TLS, security headers); the frontend is a static
+build on **Vercel**. Nothing is persisted, so no database is provisioned; the
+weather cache is in-process (set `DATABASE_URL` + `CACHE_URL=dbcache://weather_cache`
+to share it across instances).
 
-**From GitHub Actions (recommended):** `.github/workflows/deploy.yml` assumes an
-IAM role via OIDC (no stored AWS keys) and runs the deploy script on every push
-to `main` that touches the app, or on demand from the Actions tab. One-time setup:
-
-1. IAM → Identity providers: add `token.actions.githubusercontent.com` (audience `sts.amazonaws.com`).
-2. IAM → Roles → Create role → Web identity: org `Pascal-Ahmadu`, repo
-   `weather-aware-truck-routing`, branch `main`. Attach
-   `AmazonEC2ContainerRegistryPowerUser`, `AWSAppRunnerFullAccess`,
-   `AdministratorAccess-Amplify`, plus an inline policy allowing
-   `iam:CreateRole`, `iam:GetRole`, `iam:AttachRolePolicy`, `iam:PassRole` on
-   `arn:aws:iam::<account>:role/weather-routing-*`.
-3. Repo → Settings → Secrets and variables → Actions: variable
-   `AWS_DEPLOY_ROLE_ARN` (the role's ARN), secrets `DJANGO_SECRET_KEY` and
-   `NOMINATIM_USER_AGENT`.
-
-**From a laptop** (needs `aws` CLI v2 with credentials, `docker`, `npm`):
-
-```bash
-./infra/aws/deploy.sh          # API to App Runner, then frontend to Amplify
-./infra/aws/deploy.sh api      # redeploy the API only
-./infra/aws/deploy.sh web      # rebuild + redeploy the frontend only
-```
-
-What it creates: an ECR repository, an IAM role App Runner uses to pull the
-image, the App Runner service `weather-routing-api` (0.25 vCPU / 0.5 GB), and an
-Amplify app `weather-routing` with a `main` branch. Environment variables
-(`SECRET_KEY`, `ALLOWED_HOSTS`, `CORS_ALLOWED_ORIGINS`, `NOMINATIM_USER_AGENT`)
-are set on the App Runner service; `VITE_API_BASE_URL` is baked into the
-frontend build. Set `NOMINATIM_USER_AGENT="weather-routing (you@example.com)"`
-before running — Nominatim's policy requires a contact.
-
-Also included: `backend/Dockerfile` (used by the script), `backend/apprunner.yaml`
-(source-based App Runner deploy from GitHub, no Docker), `amplify.yml`
-(Amplify CI from GitHub, monorepo-aware) and `render.yaml` as a non-AWS alternative.
-
-### Alternative: a single EC2 instance (API) + Amplify or Vercel (frontend)
+### API on EC2
 
 On a fresh Ubuntu instance (t3.micro is plenty) with inbound 80/443 open:
 
@@ -236,10 +202,28 @@ curl -fsSL https://raw.githubusercontent.com/Pascal-Ahmadu/weather-aware-truck-r
 
 `infra/aws/ec2-setup.sh` installs Docker and Caddy, builds the API image from
 this repo, runs it with `--restart unless-stopped`, and serves it over HTTPS at
-`https://<ip-with-dashes>.sslip.io` with an automatic Let's Encrypt certificate
-(no domain purchase needed). Re-run the same command to update.
+`https://<ip-with-dashes>.sslip.io` with an automatic certificate (no domain
+purchase needed). Settings live in `/etc/weather-routing.env` (add `ORS_API_KEY`
+there for truck routing). Re-run the same command to update; it pulls `main`,
+rebuilds and restarts.
 
-### Alternative: Vercel (both halves, zero infrastructure)
+### Frontend on Vercel
+
+Import the repo, root directory `frontend`, framework Vite. Set
+`VITE_API_BASE_URL=https://<api-host>` — or leave it unset and let
+`frontend/vercel.json` proxy `/api/*` to the API (same-origin, no CORS).
+
+### Alternatives in the repo
+
+- `infra/aws/deploy.sh` — one-shot **App Runner + Amplify** deployment (ECR image,
+  pull role, App Runner service, Amplify app). Needs `aws` CLI v2, `docker`, `npm`.
+- `backend/apprunner.yaml` — source-based App Runner deploy from GitHub, no Docker.
+- `amplify.yml` — Amplify CI from GitHub, monorepo-aware.
+- `render.yaml` — Render blueprint.
+- `backend/vercel.json` — run the Django API as a Vercel Python function (expect a
+  1–2 s cold start; the in-process cache does not persist between invocations).
+
+### Vercel for both halves (zero infrastructure)
 
 Importing the repo into Vercel detects two projects. Configure them as:
 
