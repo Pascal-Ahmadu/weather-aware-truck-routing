@@ -201,6 +201,20 @@ Also included: `backend/Dockerfile` (used by the script), `backend/apprunner.yam
 (source-based App Runner deploy from GitHub, no Docker), `amplify.yml`
 (Amplify CI from GitHub, monorepo-aware) and `render.yaml` as a non-AWS alternative.
 
+### Alternative: a single EC2 instance (API) + Amplify or Vercel (frontend)
+
+On a fresh Ubuntu instance (t3.micro is plenty) with inbound 80/443 open:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Pascal-Ahmadu/weather-aware-truck-routing/main/infra/aws/ec2-setup.sh \
+  | sudo bash -s -- <public-ip> https://<frontend-origin> you@example.com
+```
+
+`infra/aws/ec2-setup.sh` installs Docker and Caddy, builds the API image from
+this repo, runs it with `--restart unless-stopped`, and serves it over HTTPS at
+`https://<ip-with-dashes>.sslip.io` with an automatic Let's Encrypt certificate
+(no domain purchase needed). Re-run the same command to update.
+
 ### Alternative: Vercel (both halves, zero infrastructure)
 
 Importing the repo into Vercel detects two projects. Configure them as:
