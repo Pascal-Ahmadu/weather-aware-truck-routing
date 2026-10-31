@@ -770,6 +770,34 @@ button.primary:disabled {
   visibility: hidden;
 }
 
+.combobox-options {
+  max-width: min(420px, calc(100vw - 32px));
+}
+
+.combobox-options .listbox-option {
+  justify-content: flex-start;
+  gap: 8px;
+  white-space: normal;
+}
+
+.option-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--muted);
+}
+
+.option-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spinner.small {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
 .listbox-option[data-selected] .option-check {
   visibility: visible;
 }

@@ -26,6 +26,8 @@ class PlanRequest:
     departure_time: datetime
     load_weight_lb: int
     checkpoint_interval_miles: int
+    origin_coords: tuple[float, float] | None = None
+    destination_coords: tuple[float, float] | None = None
 
 
 @dataclass
@@ -44,8 +46,8 @@ class Checkpoint:
 
 
 def plan_trip(request: PlanRequest) -> dict:
-    origin = resolve_location(request.origin)
-    destination = resolve_location(request.destination)
+    origin = resolve_location(request.origin, request.origin_coords)
+    destination = resolve_location(request.destination, request.destination_coords)
     routes = get_routes((origin.lat, origin.lon), (destination.lat, destination.lon))
 
     checkpoints_per_route = [sample_checkpoints(route, request.checkpoint_interval_miles) for route in routes]
@@ -108,7 +110,9 @@ def plan_trip(request: PlanRequest) -> dict:
     }
 
 
-def resolve_location(text: str) -> Location:
+def resolve_location(text: str, coords: tuple[float, float] | None = None) -> Location:
+    if coords is not None:
+        return Location(name=text, lat=coords[0], lon=coords[1])
     match = LATLON_PATTERN.match(text)
     if match:
         lat, lon = float(match.group(1)), float(match.group(2))

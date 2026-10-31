@@ -9,4 +9,5 @@ def health(_request):
 urlpatterns = [
     path("api/health/", health),
     path("api/trips/", include("trips.urls")),
+    path("api/geocode/", include("geocoding.urls")),
 ]

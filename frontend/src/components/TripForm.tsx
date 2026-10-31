@@ -1,10 +1,11 @@
-import { ArrowRightIcon, MapPinIcon, ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import { ArrowRightIcon, ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { useState, type FormEvent } from "react";
 
 import type { ApiError, PlanRequest } from "../lib/api";
 import { validateTripForm, type TripFormErrors } from "../lib/schema";
 import { DateTimeField } from "./ui/DateTimeField";
 import { Field } from "./ui/Field";
+import { LocationField, type LocationValue } from "./ui/LocationField";
 import { SelectField } from "./ui/SelectField";
 
 interface Props {
@@ -36,8 +37,8 @@ function startOfToday(): Date {
 }
 
 export function TripForm({ isPending, error, onSubmit }: Props) {
-  const [origin, setOrigin] = useState("Denver, CO");
-  const [destination, setDestination] = useState("Salt Lake City, UT");
+  const [origin, setOrigin] = useState<LocationValue>({ text: "Denver, CO", coords: null });
+  const [destination, setDestination] = useState<LocationValue>({ text: "Salt Lake City, UT", coords: null });
   const [departure, setDeparture] = useState<Date>(defaultDeparture);
   const [loadWeightLb, setLoadWeightLb] = useState("42000");
   const [intervalMiles, setIntervalMiles] = useState<Interval>(25);
@@ -50,8 +51,8 @@ export function TripForm({ isPending, error, onSubmit }: Props) {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const { values, errors: validationErrors } = validateTripForm({
-      origin,
-      destination,
+      origin: origin.text,
+      destination: destination.text,
       departure,
       loadWeightLb,
       intervalMiles,
@@ -61,6 +62,8 @@ export function TripForm({ isPending, error, onSubmit }: Props) {
     onSubmit({
       origin: values.origin,
       destination: values.destination,
+      origin_coords: origin.coords,
+      destination_coords: destination.coords,
       departure_time: values.departure.toISOString(),
       load_weight_lb: values.loadWeightLb,
       checkpoint_interval_miles: values.intervalMiles,
@@ -72,31 +75,16 @@ export function TripForm({ isPending, error, onSubmit }: Props) {
   return (
     <form className="trip-form" onSubmit={handleSubmit} noValidate>
       <Field id="origin" label="Origin" error={errors.origin ?? serverFieldError("origin")}>
-        <div className="input-wrap">
-          <MapPinIcon className="input-icon" aria-hidden />
-          <input
-            id="origin"
-            aria-labelledby="origin-label"
-            value={origin}
-            onChange={(e) => setOrigin(e.target.value)}
-            placeholder="City, address or lat,lon"
-            autoComplete="off"
-          />
-        </div>
+        <LocationField id="origin" value={origin} onChange={setOrigin} placeholder="Search a city or address" />
       </Field>
 
       <Field id="destination" label="Destination" error={errors.destination ?? serverFieldError("destination")}>
-        <div className="input-wrap">
-          <MapPinIcon className="input-icon" aria-hidden />
-          <input
-            id="destination"
-            aria-labelledby="destination-label"
-            value={destination}
-            onChange={(e) => setDestination(e.target.value)}
-            placeholder="City, address or lat,lon"
-            autoComplete="off"
-          />
-        </div>
+        <LocationField
+          id="destination"
+          value={destination}
+          onChange={setDestination}
+          placeholder="Search a city or address"
+        />
       </Field>
 
       <Field id="departure" label="Departure" error={errors.departure ?? serverFieldError("departure_time")}>

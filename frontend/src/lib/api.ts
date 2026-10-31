@@ -68,9 +68,18 @@ export interface PlanResponse {
   recommended_route_id: string;
 }
 
+export interface LocationSuggestion {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface PlanRequest {
   origin: string;
   destination: string;
+  /** [lat, lon] when the user picked a suggestion; lets the API skip re-geocoding the label. */
+  origin_coords?: [number, number] | null;
+  destination_coords?: [number, number] | null;
   departure_time: string;
   load_weight_lb: number;
   checkpoint_interval_miles: 10 | 25 | 50;
@@ -101,6 +110,14 @@ export async function planTrip(request: PlanRequest, signal?: AbortSignal): Prom
     throw await toApiError(response);
   }
   return (await response.json()) as PlanResponse;
+}
+
+export async function suggestLocations(query: string, signal?: AbortSignal): Promise<LocationSuggestion[]> {
+  const response = await fetch(`${API_BASE_URL}/api/geocode/suggest/?q=${encodeURIComponent(query)}`, { signal });
+  if (!response.ok) {
+    throw await toApiError(response);
+  }
+  return ((await response.json()) as { results: LocationSuggestion[] }).results;
 }
 
 async function toApiError(response: Response): Promise<ApiError> {

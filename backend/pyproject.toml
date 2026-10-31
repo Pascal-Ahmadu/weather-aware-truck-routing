@@ -8,4 +8,4 @@ select = ["E", "F", "I", "B", "UP"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.test_settings"
 python_files = ["test_*.py"]
-testpaths = ["risk", "recommendation", "routing", "trips", "core"]
+testpaths = ["risk", "recommendation", "routing", "geocoding", "trips", "core"]

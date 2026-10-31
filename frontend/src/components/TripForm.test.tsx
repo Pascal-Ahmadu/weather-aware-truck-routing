@@ -1,11 +1,48 @@
-import { render, screen } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "../lib/api";
+import { renderWithQuery as render } from "../test/render";
 import { TripForm } from "./TripForm";
 
+const SUGGESTIONS = [{ name: "Seattle, Washington, United States", lat: 47.6062, lon: -122.3321 }];
+
+function jsonResponse(body: unknown) {
+  return new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
+}
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => jsonResponse({ results: SUGGESTIONS })),
+  );
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 describe("TripForm", () => {
+  it("offers location suggestions and submits picked coordinates", async () => {
+    const onSubmit = vi.fn();
+    render(<TripForm isPending={false} error={null} onSubmit={onSubmit} />);
+
+    const origin = screen.getByLabelText("Origin");
+    await userEvent.clear(origin);
+    await userEvent.type(origin, "Seatt");
+
+    const option = await screen.findByRole("option", { name: /Seattle, Washington/ });
+    await userEvent.click(option);
+    await waitFor(() => expect(origin).toHaveValue("Seattle, Washington, United States"));
+
+    await userEvent.click(screen.getByRole("button", { name: /find safest route/i }));
+    const request = onSubmit.mock.calls[0]![0];
+    expect(request.origin).toBe("Seattle, Washington, United States");
+    expect(request.origin_coords).toEqual([47.6062, -122.3321]);
+    expect(request.destination_coords).toBeNull();
+  });
+
   it("submits the trip with an ISO departure and numeric load", async () => {
     const onSubmit = vi.fn();
     render(<TripForm isPending={false} error={null} onSubmit={onSubmit} />);

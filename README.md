@@ -9,6 +9,9 @@ actually be there**, classifies each checkpoint with the wind / rain / snow / lo
 rules, ranks the routes, and shows everything on a map with a 0–48 h weather
 heatmap slider.
 
+- **Live app:** https://frontend-ashy-mu-27.vercel.app
+- **API:** https://52-45-175-85.sslip.io/api/health/ (Django on AWS EC2 behind Caddy TLS)
+
 ## How it works
 
 ```
@@ -117,17 +120,28 @@ CI (`.github/workflows/ci.yml`) runs exactly these plus a Django boot check.
 
 ## API
 
+`GET /api/geocode/suggest/?q=denv` — type-ahead suggestions (Photon, cached 10 min):
+
+```json
+{ "results": [{ "name": "Denver, Colorado, United States", "lat": 39.7392, "lon": -104.9903 }] }
+```
+
 `POST /api/trips/plan/`
 
 ```json
 {
   "origin": "Denver, CO",
   "destination": "Salt Lake City, UT",
+  "origin_coords": [39.7392, -104.9903],
+  "destination_coords": null,
   "departure_time": "2026-11-01T14:00:00Z",
   "load_weight_lb": 42000,
   "checkpoint_interval_miles": 25
 }
 ```
+
+`*_coords` are optional `[lat, lon]` pairs from a picked suggestion; when present the
+label is used as-is and not re-geocoded. Free text (or `lat,lon`) still works.
 
 Response (abridged):
 

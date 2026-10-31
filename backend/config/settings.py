@@ -40,7 +40,10 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
-    "DEFAULT_THROTTLE_RATES": {"plan": env("PLAN_THROTTLE_RATE", default="30/min")},
+    "DEFAULT_THROTTLE_RATES": {
+        "plan": env("PLAN_THROTTLE_RATE", default="30/min"),
+        "suggest": env("SUGGEST_THROTTLE_RATE", default="120/min"),
+    },
     "EXCEPTION_HANDLER": "core.exceptions.exception_handler",
 }
 
@@ -48,6 +51,10 @@ REST_FRAMEWORK = {
 OSRM_BASE_URL = env("OSRM_BASE_URL", default="https://router.project-osrm.org")
 OPEN_METEO_BASE_URL = env("OPEN_METEO_BASE_URL", default="https://api.open-meteo.com")
 NOMINATIM_BASE_URL = env("NOMINATIM_BASE_URL", default="https://nominatim.openstreetmap.org")
+PHOTON_BASE_URL = env("PHOTON_BASE_URL", default="https://photon.komoot.io")
+SUGGEST_BIAS_LAT = env.float("SUGGEST_BIAS_LAT", default=39.8)  # geographic centre of the contiguous US
+SUGGEST_BIAS_LON = env.float("SUGGEST_BIAS_LON", default=-98.6)
+SUGGEST_PREFERRED_COUNTRY = env("SUGGEST_PREFERRED_COUNTRY", default="US")
 NOMINATIM_USER_AGENT = env("NOMINATIM_USER_AGENT", default="weather-routing-demo")
 HTTP_TIMEOUT_SECONDS = env.float("HTTP_TIMEOUT_SECONDS", default=15.0)
 WEATHER_CACHE_TTL_SECONDS = env.int("WEATHER_CACHE_TTL_SECONDS", default=1800)

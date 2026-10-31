@@ -162,6 +162,29 @@ def test_latlon_input_skips_geocoding(providers):
 
 
 @pytest.mark.django_db
+def test_picked_suggestion_coordinates_skip_geocoding_and_keep_the_label(providers):
+    providers["routes"].return_value = [straight_route(10, seconds_per_mile=60)]
+    providers["weather"].side_effect = lambda keys, start, end: {key: forecast(start, 60) for key in keys}
+
+    data = post_plan(
+        APIClient(),
+        origin="Denver, Colorado, United States",
+        origin_coords=[39.7392, -104.9903],
+        destination="Salt Lake City, Utah, United States",
+        destination_coords=[40.7608, -111.891],
+    ).json()
+    assert providers["geocode"].call_count == 0
+    assert data["query"]["origin"] == {"name": "Denver, Colorado, United States", "lat": 39.7392, "lon": -104.9903}
+
+
+@pytest.mark.django_db
+def test_out_of_range_coordinates_are_rejected(providers):
+    response = post_plan(APIClient(), origin_coords=[95.0, 10.0])
+    assert response.status_code == 400
+    assert "origin_coords" in response.json()["error"]["detail"]
+
+
+@pytest.mark.django_db
 def test_upstream_failure_returns_503_with_error_shape(providers):
     providers["routes"].side_effect = UpstreamServiceError("Routing service is unavailable.")
     response = post_plan(APIClient())
