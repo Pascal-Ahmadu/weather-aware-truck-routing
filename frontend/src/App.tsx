@@ -100,18 +100,18 @@ export default function App() {
           <section className="summary" aria-label="Plan summary">
             <div className="summary-head">
               <span className="summary-title">
-                {result.routes.length} route{result.routes.length === 1 ? "" : "s"} · recommended #1
+                Recommended · <strong>{formatDuration(recommended.duration_seconds)}</strong> ·{" "}
+                {formatMiles(recommended.distance_miles)}
               </span>
               <RiskBadge level={worstRiskAtEta(recommended)} detail="worst" />
             </div>
-            <p className="summary-line">
-              <strong>{formatDuration(recommended.duration_seconds)}</strong> · {formatMiles(recommended.distance_miles)} ·{" "}
-              {explainRecommendation(recommended, routes)[0]}
-            </p>
-            <button type="button" className="secondary" onClick={() => setResultsOpen(true)}>
-              <ListBulletIcon className="btn-icon" aria-hidden />
-              View all routes
-            </button>
+            <div className="summary-row">
+              <p className="summary-line">{explainRecommendation(recommended, routes)[0]}</p>
+              <button type="button" className="secondary small" onClick={() => setResultsOpen(true)}>
+                <ListBulletIcon className="btn-icon" aria-hidden />
+                All {result.routes.length} route{result.routes.length === 1 ? "" : "s"}
+              </button>
+            </div>
           </section>
         )}
 
