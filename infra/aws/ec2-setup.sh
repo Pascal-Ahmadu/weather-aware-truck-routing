@@ -68,10 +68,10 @@ systemctl reload caddy || systemctl restart caddy
 
 log "Waiting for the API"
 for _ in $(seq 1 30); do
-  curl -fsS http://127.0.0.1:8000/api/health/ >/dev/null 2>&1 && break
+  curl -fsS -H "Host: ${HOST}" http://127.0.0.1:8000/api/health/ >/dev/null 2>&1 && break
   sleep 2
 done
-curl -fsS http://127.0.0.1:8000/api/health/ && echo
+curl -fsS -H "Host: ${HOST}" http://127.0.0.1:8000/api/health/ && echo
 
 log "Done. API: https://${HOST}/api/health/  (certificate is issued on the first HTTPS request; allow ~30 s)"
 echo "To update later: sudo bash ${APP_DIR}/infra/aws/ec2-setup.sh ${PUBLIC_IP}"
