@@ -94,10 +94,7 @@ export function TripForm({ isPending, error, preset, onSubmit }: Props) {
     <form className="card trip-form" onSubmit={handleSubmit} noValidate>
       <div className="card-header">
         <h2 className="card-title">Plan a trip</h2>
-        <p className="card-desc">
-          Routes are compared by the forecast at the hour your truck reaches each checkpoint, with the wind, rain,
-          snow and load rules applied.
-        </p>
+        <p className="card-desc">Routes are ranked by the forecast at each checkpoint's ETA and your load.</p>
       </div>
 
       <div className="card-body">

@@ -49,10 +49,10 @@ body,
   border-right: 1px solid var(--panel-border);
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 24px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 14px;
 }
 
 .sidebar-header {
@@ -161,6 +161,52 @@ button.secondary:focus-visible {
   background: transparent;
 }
 
+.dialog-panel-wide {
+  width: min(520px, 100%);
+}
+
+.dialog-panel .results-worst {
+  margin-top: 8px;
+}
+
+/* Compact plan summary under the form */
+.summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fdfdfd;
+  border: 1px solid #dcdcdc;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+  animation: rise-in 300ms both;
+}
+
+.summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.summary-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.summary-line {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #525252;
+}
+
+.summary-line strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .dialog-close {
   position: absolute;
   top: 12px;
@@ -203,7 +249,7 @@ button.secondary:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 16px 44px 16px 20px; /* room for the modal close button */
+  padding: 12px 44px 12px 20px; /* room for the modal close button */
   border-bottom: 1px solid #dcdcdc;
 }
 
@@ -225,14 +271,14 @@ button.secondary:focus-visible {
 .card-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 10px;
+  padding: 12px 20px 14px;
 }
 
 .card-footer {
   display: flex;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 12px 20px;
   border-top: 1px solid #dcdcdc;
 }
 
@@ -247,7 +293,7 @@ button.secondary:focus-visible {
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   flex: 1 1 0;
   min-width: 0;
 }
@@ -994,10 +1040,7 @@ button.primary:disabled {
 
 /* Empty state with example trips */
 .empty-state {
-  border: 1px dashed var(--panel-border);
-  border-radius: var(--radius);
-  padding: 16px;
-  background: var(--panel);
+  padding: 2px 4px;
 }
 
 .empty-title {

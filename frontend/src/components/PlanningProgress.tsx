@@ -8,8 +8,8 @@ const STEPS = [
   { label: "Classifying risk and ranking", until: Infinity },
 ];
 
-/** Time-based stage indicator for the single plan request, with skeleton cards below. */
-export function PlanningProgress({ startedAt }: { startedAt: number }) {
+/** Time-based stage indicator for the single plan request, with skeleton cards below unless compact. */
+export function PlanningProgress({ startedAt, compact = false }: { startedAt: number; compact?: boolean }) {
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -34,15 +34,17 @@ export function PlanningProgress({ startedAt }: { startedAt: number }) {
           );
         })}
       </ol>
-      <div className="skeleton-cards" aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 120}ms` }}>
-            <span className="skeleton-line w-60" />
-            <span className="skeleton-line bar" />
-            <span className="skeleton-line w-90" />
-          </div>
-        ))}
-      </div>
+      {!compact && (
+        <div className="skeleton-cards" aria-hidden>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="skeleton-card" style={{ animationDelay: `${i * 120}ms` }}>
+              <span className="skeleton-line w-60" />
+              <span className="skeleton-line bar" />
+              <span className="skeleton-line w-90" />
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
