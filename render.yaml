@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: weather-routing-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        sync: false # e.g. weather-routing-api.onrender.com
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false # e.g. https://your-frontend.vercel.app
+      - key: NOMINATIM_USER_AGENT
+        sync: false # app name + contact email, required by Nominatim's usage policy
