@@ -32,10 +32,19 @@ if ! command -v caddy >/dev/null; then
 fi
 
 log "Fetching the app"
+SELF="$APP_DIR/infra/aws/ec2-setup.sh"
+BEFORE="$(sha256sum "$SELF" 2>/dev/null | cut -d' ' -f1 || true)"
 if [[ -d "$APP_DIR/.git" ]]; then
   git -C "$APP_DIR" pull -q --ff-only
 else
   git clone -q "$REPO" "$APP_DIR"
+fi
+AFTER="$(sha256sum "$SELF" 2>/dev/null | cut -d' ' -f1 || true)"
+# bash reads a script lazily, so a pull that changes this file mid-run would mix old and new
+# lines. Hand over to the freshly pulled copy instead.
+if [[ -n "$BEFORE" && "$BEFORE" != "$AFTER" && -z "${EC2_SETUP_REEXEC:-}" ]]; then
+  log "Setup script changed upstream; re-running the new version"
+  EC2_SETUP_REEXEC=1 exec bash "$SELF" "$PUBLIC_IP" "$FRONTEND_ORIGIN" "$CONTACT"
 fi
 
 log "Writing ${ENV_FILE} (kept across re-runs; edit it to change settings)"
