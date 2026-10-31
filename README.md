@@ -166,7 +166,22 @@ Nothing is persisted, so no database is provisioned; the weather cache is
 in-process (set `DATABASE_URL` + `CACHE_URL=dbcache://weather_cache` to share it
 across instances).
 
-One command does both, idempotently (needs `aws` CLI v2 with credentials, `docker`, `npm`):
+**From GitHub Actions (recommended):** `.github/workflows/deploy.yml` assumes an
+IAM role via OIDC (no stored AWS keys) and runs the deploy script on every push
+to `main` that touches the app, or on demand from the Actions tab. One-time setup:
+
+1. IAM → Identity providers: add `token.actions.githubusercontent.com` (audience `sts.amazonaws.com`).
+2. IAM → Roles → Create role → Web identity: org `Pascal-Ahmadu`, repo
+   `weather-aware-truck-routing`, branch `main`. Attach
+   `AmazonEC2ContainerRegistryPowerUser`, `AWSAppRunnerFullAccess`,
+   `AdministratorAccess-Amplify`, plus an inline policy allowing
+   `iam:CreateRole`, `iam:GetRole`, `iam:AttachRolePolicy`, `iam:PassRole` on
+   `arn:aws:iam::<account>:role/weather-routing-*`.
+3. Repo → Settings → Secrets and variables → Actions: variable
+   `AWS_DEPLOY_ROLE_ARN` (the role's ARN), secrets `DJANGO_SECRET_KEY` and
+   `NOMINATIM_USER_AGENT`.
+
+**From a laptop** (needs `aws` CLI v2 with credentials, `docker`, `npm`):
 
 ```bash
 ./infra/aws/deploy.sh          # API to App Runner, then frontend to Amplify
