@@ -23,15 +23,19 @@ origin/destination ─▶ geocode ─▶ OSRM routes (≤3) ─▶ checkpoints e
                                                        (one call per location, 0–48 h+)
 ```
 
-1. **Routing** — OSRM returns the fastest route (and sometimes alternatives) with
-   per-segment distance and duration. Because OSRM's own alternatives are often
-   empty on long interstate trips, the client also requests routes through detour
-   waypoints offset to either side of the primary route and keeps candidates that
-   are genuinely different (< 80 % shared road), at most 1.5× the primary's
-   duration, and not out-and-back spurs — until it has three. Checkpoints are
-   interpolated along the road geometry at mile 0, every N miles, and the
-   destination; each checkpoint's ETA is the cumulative router duration to that
-   point, so a slow mountain stretch pushes later ETAs back.
+1. **Routing** — **OpenRouteService's `driving-hgv` profile** when an `ORS_API_KEY`
+   is configured: the truck's gross weight (load + a configurable 33,000 lb
+   tractor/trailer tare) is sent as a restriction so weight-limited roads are
+   avoided, and HGV speed limits drive the ETAs (Denver → Salt Lake City is 11.3 h
+   by truck vs 9 h by car). Without a key — or if ORS is down — it falls back to
+   OSRM's keyless car profile. Routers rarely return three distinct routes on long
+   interstate trips (ORS only offers built-in alternatives under 100 km), so the
+   client also requests routes through detour waypoints offset to either side of
+   the primary and keeps candidates that are genuinely different (< 80 % shared
+   road), at most 1.5× the primary's duration, and not out-and-back spurs — until it
+   has three. Checkpoints are interpolated along the road geometry at mile 0, every
+   N miles, and the destination; each checkpoint's ETA comes from the router's
+   per-step durations, so a slow mountain stretch pushes later ETAs back.
 2. **Weather** — Open-Meteo returns hourly `wind_speed_10m` (mph), `rain` and
    `snowfall` (inches) for the whole trip window in one call per unique location
    (deduplicated on a ~1 km grid, batched, cached for 30 min).
@@ -66,7 +70,7 @@ threshold boundary has a unit test (`backend/risk/tests/test_engine.py`).
 | No Travel | Treated as a hard constraint and ranked before the four spec criteria, and flagged on the route card. |
 | Missing forecast | Reported as **Unknown** (grey), excluded from the average, never defaulted to Low. |
 | Heatmap window | 0–48 h from the departure hour; weather is also fetched past 48 h if the trip runs longer so late checkpoints still get an ETA reading. |
-| Routing profile | OSRM's public server uses a car profile — no truck height/weight restrictions. The client is a thin wrapper so a truck-aware provider can be swapped in by URL. |
+| Routing profile | OpenRouteService `driving-hgv` with gross weight = load + 33,000 lb tare (`TRUCK_TARE_LB`); height/width are not sent because the brief gives no vehicle dimensions. OSRM (car profile) is the keyless fallback and is labelled as such in the response and UI. |
 
 ## Repository layout
 
@@ -89,7 +93,9 @@ infra/aws/deploy.sh              one-shot App Runner + Amplify deployment
 
 ## Running locally
 
-Prerequisites: Python 3.12, Node 20+. No API keys are needed — all providers are keyless.
+Prerequisites: Python 3.12, Node 20+. Everything runs keyless; add a free
+[OpenRouteService](https://openrouteservice.org) key as `ORS_API_KEY` to get
+truck-aware routing instead of the OSRM car fallback.
 
 ```bash
 # Backend
@@ -244,10 +250,11 @@ does not persist between invocations (correctness is unaffected).
 
 ## Known limitations
 
-- OSRM's public demo server is rate-limited, uses a car profile, and does not
-  support `exclude=` classes. Where even detour waypoints cannot produce three
-  distinct, reasonable routes (e.g. a single road through a canyon), the app
-  honestly shows fewer rather than padding with near-duplicates.
+- ORS's free tier allows ~2,000 directions requests/day (a plan uses up to 11);
+  the OSRM fallback is a rate-limited public demo with a car profile. Where even
+  detour waypoints cannot produce three distinct, reasonable routes (e.g. a single
+  road through a canyon), the app honestly shows fewer rather than padding with
+  near-duplicates.
 - Nominatim allows one request per second; the app makes two per plan.
 - Forecasts are limited to Open-Meteo's horizon, so departures must be within 14 days.
 - The heatmap blends overlapping checkpoints additively (a property of

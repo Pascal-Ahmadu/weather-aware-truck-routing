@@ -34,6 +34,9 @@ export function ResultsDialog({ open, result, selectedId, onSelect, onClose }: P
             <p className="card-desc">
               {result.query.origin.name.split(",")[0]} → {result.query.destination.name.split(",")[0]} ·{" "}
               {formatDateTime(result.query.departure_time)} · {result.query.load_weight_lb.toLocaleString()} lb
+              {result.routing.profile === "driving-hgv" && result.routing.gross_weight_lb !== null
+                ? ` · truck routing at ${result.routing.gross_weight_lb.toLocaleString()} lb gross`
+                : " · car routing"}
             </p>
             {recommended && (
               <div className="results-worst">

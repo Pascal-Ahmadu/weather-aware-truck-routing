@@ -12,7 +12,8 @@ from geocoding.client import Location, geocode
 from recommendation.engine import ClassifiedSegment, RouteRiskSummary, rank_routes, summarize_route
 from risk.engine import classify_checkpoint
 from risk.types import RiskLevel
-from routing.client import Route, get_routes
+from routing.alternatives import Route
+from routing.provider import get_routes, routing_info
 from weather.client import HourlyForecast, LocationKey, get_hourly, location_key
 
 LATLON_PATTERN = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
@@ -48,7 +49,7 @@ class Checkpoint:
 def plan_trip(request: PlanRequest) -> dict:
     origin = resolve_location(request.origin, request.origin_coords)
     destination = resolve_location(request.destination, request.destination_coords)
-    routes = get_routes((origin.lat, origin.lon), (destination.lat, destination.lon))
+    routes = get_routes((origin.lat, origin.lon), (destination.lat, destination.lon), request.load_weight_lb)
 
     checkpoints_per_route = [sample_checkpoints(route, request.checkpoint_interval_miles) for route in routes]
 
@@ -105,6 +106,7 @@ def plan_trip(request: PlanRequest) -> dict:
             "checkpoint_interval_miles": request.checkpoint_interval_miles,
         },
         "forecast_hours": forecast_hours,
+        "routing": routing_info(request.load_weight_lb),
         "routes": route_payloads,
         "recommended_route_id": ranked[0].route_id,
     }

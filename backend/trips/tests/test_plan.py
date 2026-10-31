@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 from core.exceptions import UpstreamServiceError
 from core.geo import METERS_PER_MILE
 from geocoding.client import Location
-from routing.client import Route
+from routing.alternatives import Route
 from weather.client import HourlyForecast
 
 DEPARTURE = datetime(2026, 11, 1, 12, 30, tzinfo=UTC)

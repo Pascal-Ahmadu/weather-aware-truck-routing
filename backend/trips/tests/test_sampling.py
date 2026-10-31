@@ -1,5 +1,5 @@
 from core.geo import METERS_PER_MILE
-from routing.client import Route
+from routing.alternatives import Route
 from trips.services import sample_checkpoints
 
 

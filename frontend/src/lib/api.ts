@@ -64,6 +64,11 @@ export interface PlanResponse {
     checkpoint_interval_miles: number;
   };
   forecast_hours: string[];
+  routing: {
+    provider: "openrouteservice" | "osrm";
+    profile: "driving-hgv" | "car";
+    gross_weight_lb: number | null;
+  };
   routes: PlannedRoute[];
   recommended_route_id: string;
 }

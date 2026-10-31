@@ -47,8 +47,14 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "core.exceptions.exception_handler",
 }
 
-# Third-party providers (all keyless). Swap by URL, not by code.
+# Third-party providers. Swap by URL/env, not by code.
 OSRM_BASE_URL = env("OSRM_BASE_URL", default="https://router.project-osrm.org")
+# OpenRouteService driving-hgv (truck-aware). "auto" uses ORS when a key is present, else OSRM.
+ORS_BASE_URL = env("ORS_BASE_URL", default="https://api.openrouteservice.org")
+ORS_API_KEY = env("ORS_API_KEY", default="")
+ROUTING_PROVIDER = env("ROUTING_PROVIDER", default="auto")  # auto | ors | osrm
+ROUTING_FALLBACK_TO_OSRM = env.bool("ROUTING_FALLBACK_TO_OSRM", default=True)
+TRUCK_TARE_LB = env.int("TRUCK_TARE_LB", default=33_000)  # tractor + empty trailer, added to the load
 OPEN_METEO_BASE_URL = env("OPEN_METEO_BASE_URL", default="https://api.open-meteo.com")
 NOMINATIM_BASE_URL = env("NOMINATIM_BASE_URL", default="https://nominatim.openstreetmap.org")
 PHOTON_BASE_URL = env("PHOTON_BASE_URL", default="https://photon.komoot.io")

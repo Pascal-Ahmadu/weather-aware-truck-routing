@@ -2,8 +2,9 @@ import pytest
 
 from core.exceptions import NoRouteFound, UpstreamServiceError
 from core.geo import METERS_PER_MILE
-from routing import client
-from routing.client import Route, get_routes
+from routing import alternatives, client
+from routing.alternatives import Route
+from routing.client import get_routes
 
 ORIGIN = (40.0, -100.0)
 DESTINATION = (40.0, -98.0)
@@ -71,8 +72,8 @@ def test_out_and_back_spurs_are_dropped(mocker):
 
 
 def test_retrace_fraction_distinguishes_spurs_from_clean_routes():
-    assert client._retrace_fraction(line(40.0)) == 0.0
-    assert client._retrace_fraction(spur_route()) > client.MAX_RETRACE_EXCESS
+    assert alternatives.retrace_fraction(line(40.0)) == 0.0
+    assert alternatives.retrace_fraction(spur_route()) > alternatives.MAX_RETRACE_EXCESS
 
 
 def test_failed_detour_requests_are_skipped_not_fatal(mocker):
@@ -92,11 +93,11 @@ def test_no_primary_route_raises(mocker):
 
 
 def test_detour_points_sit_either_side_of_the_trip():
-    points = client._detour_points(line(40.0), ORIGIN, DESTINATION)
-    assert len(points) == 2 * len(client.DETOUR_FRACTIONS)
+    points = alternatives.detour_points(line(40.0), ORIGIN, DESTINATION)
+    assert len(points) == 2 * len(alternatives.DETOUR_FRACTIONS)
     north = [p for p in points if p[0] > 40.0]
     south = [p for p in points if p[0] < 40.0]
-    assert len(north) == len(south) == len(client.DETOUR_FRACTIONS)
+    assert len(north) == len(south) == len(alternatives.DETOUR_FRACTIONS)
     # 100 mi trip -> 12 mi offset -> ~0.17 degrees of latitude
     assert all(abs(abs(p[0] - 40.0) - 12 / 69) < 0.01 for p in points)
 
