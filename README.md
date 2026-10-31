@@ -1,5 +1,7 @@
 # Weather-Aware Truck Routing
 
+[![CI](https://github.com/Pascal-Ahmadu/weather-aware-truck-routing/actions/workflows/ci.yml/badge.svg)](https://github.com/Pascal-Ahmadu/weather-aware-truck-routing/actions/workflows/ci.yml)
+
 A React + Django web app that helps a truck driver pick the safest route. Enter an
 origin, destination, departure time and load weight; the app fetches up to three
 routes, samples the forecast at every checkpoint **at the hour the truck will
