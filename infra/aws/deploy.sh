@@ -47,7 +47,7 @@ deploy_api() {
   SERVICE_ARN="$(aws apprunner list-services --region "$REGION" \
     --query "ServiceSummaryList[?ServiceName=='${APP_NAME}-api'].ServiceArn | [0]" --output text)"
 
-  ENV_JSON="$(printf '{"SECRET_KEY":"%s","DEBUG":"False","ALLOWED_HOSTS":"*","CORS_ALLOWED_ORIGINS":"%s","NOMINATIM_USER_AGENT":"%s"}' \
+  ENV_JSON="$(printf '{"SECRET_KEY":"%s","DEBUG":"False","ALLOWED_HOSTS":".awsapprunner.com","CORS_ALLOWED_ORIGINS":"%s","NOMINATIM_USER_AGENT":"%s"}' \
     "$SECRET_KEY" "${FRONTEND_ORIGIN:-http://localhost:5173}" "${NOMINATIM_USER_AGENT:-weather-routing (set-your-email@example.com)}")"
 
   SOURCE_CONFIG="$(cat <<JSON
@@ -116,7 +116,13 @@ deploy_web() {
   fi
 
   log "Uploading build"
-  (cd "${ROOT}/frontend/dist" && rm -f ../dist.zip && zip -qr ../dist.zip .)
+  rm -f "${ROOT}/frontend/dist.zip"
+  if command -v zip >/dev/null 2>&1; then
+    (cd "${ROOT}/frontend/dist" && zip -qr ../dist.zip .)
+  else
+    # Git Bash on Windows has no zip; Python's zipfile CLI keeps index.html at the archive root.
+    (cd "${ROOT}/frontend/dist" && python -m zipfile -c ../dist.zip ./*)
+  fi
   read -r JOB_ID UPLOAD_URL < <(aws amplify create-deployment --region "$REGION" --app-id "$APP_ID" --branch-name main \
     --query '[jobId, zipUploadUrl]' --output text)
   curl -fsS -T "${ROOT}/frontend/dist.zip" "$UPLOAD_URL"
