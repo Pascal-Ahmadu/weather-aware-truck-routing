@@ -222,7 +222,7 @@ Importing the repo into Vercel detects two projects. Configure them as:
 | Project | Root directory | Environment variables |
 |---|---|---|
 | API | `backend` | `SECRET_KEY`, `DEBUG=False`, `ALLOWED_HOSTS=.vercel.app`, `CORS_ALLOWED_ORIGIN_REGEXES=^https://weather-aware-truck-routing.*\.vercel\.app$`, `NOMINATIM_USER_AGENT` |
-| Web | `frontend` | `VITE_API_BASE_URL=https://<api-project>.vercel.app` |
+| Web | `frontend` | `VITE_API_BASE_URL=https://<api-project>.vercel.app` — or leave it unset and let `frontend/vercel.json` proxy `/api/*` to the API (same-origin, no CORS) |
 
 `backend/vercel.json` routes every path to Django's WSGI app as a Python
 function. Expect a 1–2 s cold start after idle; the in-process weather cache
