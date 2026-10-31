@@ -83,7 +83,6 @@ export default function App() {
             <TruckIcon className="title-icon" aria-hidden />
             Weather-Aware Truck Routing
           </h1>
-          <p>Compare routes by forecast risk at the hour your truck actually arrives at each checkpoint.</p>
         </header>
 
         <TripForm isPending={plan.isPending} error={plan.error} preset={preset} onSubmit={submit} />

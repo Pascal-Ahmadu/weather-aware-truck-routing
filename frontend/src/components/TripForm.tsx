@@ -91,7 +91,16 @@ export function TripForm({ isPending, error, preset, onSubmit }: Props) {
   const serverFieldError = (field: string) => error?.fieldErrors[field]?.[0];
 
   return (
-    <form className="trip-form" onSubmit={handleSubmit} noValidate>
+    <form className="card trip-form" onSubmit={handleSubmit} noValidate>
+      <div className="card-header">
+        <h2 className="card-title">Plan a trip</h2>
+        <p className="card-desc">
+          Routes are compared by the forecast at the hour your truck reaches each checkpoint, with the wind, rain,
+          snow and load rules applied.
+        </p>
+      </div>
+
+      <div className="card-body">
       <Field id="origin" label="Origin" error={errors.origin ?? serverFieldError("origin")}>
         <LocationField id="origin" value={origin} onChange={setOrigin} placeholder="Search a city or address" />
       </Field>
@@ -146,10 +155,13 @@ export function TripForm({ isPending, error, preset, onSubmit }: Props) {
           {error.message}
         </p>
       )}
+      </div>
 
-      <button type="submit" className="primary" disabled={isPending}>
-        {isPending ? "Checking weather along routes…" : "Find safest route"}
-      </button>
+      <div className="card-footer">
+        <button type="submit" className="primary" disabled={isPending}>
+          {isPending ? "Checking weather along routes…" : "Find safest route"}
+        </button>
+      </div>
     </form>
   );
 }

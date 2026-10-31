@@ -59,24 +59,63 @@ body,
   font-size: 1.3rem;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin: 0 0 6px;
-}
-
-.sidebar-header p {
   margin: 0;
-  color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
 }
 
-.trip-form {
+/* Card: header (title + description) / body / footer, separated by hairlines */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #fdfdfd;
+  border: 1px solid #dcdcdc;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-xs);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 30px;
+  font-weight: 700;
+  color: #292929;
+}
+
+.card-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 20px;
+  color: #525252;
+}
+
+.card-body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-width: 0;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  padding: 16px;
+  padding: 16px 20px;
+}
+
+.card-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #dcdcdc;
+}
+
+.card-footer .primary {
+  flex: 1;
+}
+
+.trip-form {
+  gap: 0;
 }
 
 .field {
@@ -502,19 +541,21 @@ button.primary:disabled {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  line-height: 18px;
+  color: #525252;
 }
 
 .risk-legend li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .swatch {
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
   display: inline-block;
 }
 
