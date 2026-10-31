@@ -1,3 +1,4 @@
+import { ExclamationCircleIcon } from "@heroicons/react/16/solid";
 import type { ReactNode } from "react";
 
 interface Props {
@@ -20,6 +21,7 @@ export function Field({ id, label, error, children }: Props) {
       {children}
       {error && (
         <span className="field-error" role="alert">
+          <ExclamationCircleIcon className="error-icon" aria-hidden />
           {error}
         </span>
       )}

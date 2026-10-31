@@ -1,16 +1,22 @@
 :root {
-  --bg: #ffffff;
-  --panel: #ffffff;
+  --bg: #fdfdfd;
+  --panel: #fdfdfd;
   --panel-border: #dadada;
   --dot: #e3e3e3;
-  --input-bg: #f7f7f6;
-  --text: #0b0900;
-  --muted: #6f6d68;
+  --input-bg: #fdfdfd;
+  --input-border: #bdbdbd;
+  --input-text: #292929;
+  --placeholder: #7c7c7c;
+  --text: #292929;
+  --muted: #7c7c7c;
   --accent: #18a7b9;
   --accent-strong: #11899a;
   --accent-soft: rgba(24, 167, 185, 0.12);
-  --danger: #c62828;
-  --radius: 2px;
+  --danger: #ff5e5e;
+  --danger-ring: #fff0f0;
+  --focus-ring: #f1f1f1;
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --radius: 8px;
   --sidebar-width: 420px;
   font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "tnum" 1;
@@ -88,24 +94,28 @@ body,
 }
 
 .field-label {
-  font-size: 0.8rem;
+  font-size: 0.875rem;
+  line-height: 20px;
   color: var(--text);
 }
 
-/* Text inputs and button-style controls share one chrome. */
+/* Text inputs and button-style controls share one chrome (40px, hairline, xs shadow). */
 .input-wrap,
 .control {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
   background: var(--input-bg);
-  border: 1px solid var(--panel-border);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius);
-  color: var(--text);
-  padding: 0 10px;
+  box-shadow: var(--shadow-xs);
+  color: var(--input-text);
+  padding: 0 12px;
   font: inherit;
+  font-size: 0.875rem;
+  line-height: 20px;
   text-align: left;
   cursor: text;
   transition: border-color 120ms, box-shadow 120ms;
@@ -127,21 +137,23 @@ body,
   min-width: 0;
   background: transparent;
   border: 0;
-  padding: 10px 0;
+  padding: 9px 0; /* 20px line + 18px padding + 2px border = the spec's 40px */
   color: inherit;
   font: inherit;
   outline: none;
 }
 
 .input-wrap input::placeholder {
-  color: #9b9995;
+  color: var(--placeholder);
 }
 
 .input-wrap:focus-within,
 .control:focus-visible,
 .control[data-open] {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  border-color: var(--input-border);
+  box-shadow:
+    0 1px 2px rgba(36, 36, 36, 0.05),
+    0 0 0 4px var(--focus-ring);
   outline: none;
 }
 
@@ -150,11 +162,20 @@ body,
   border-color: var(--danger);
 }
 
+.field.has-error .input-wrap:focus-within,
+.field.has-error .control:focus-visible,
+.field.has-error .control[data-open] {
+  border-color: var(--danger);
+  box-shadow:
+    0 1px 2px rgba(36, 36, 36, 0.05),
+    0 0 0 4px var(--danger-ring);
+}
+
 .input-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   flex: none;
-  color: var(--muted);
+  color: #525252;
 }
 
 .control-value {
@@ -166,8 +187,8 @@ body,
 }
 
 .control-chevron {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex: none;
   color: var(--muted);
 }
@@ -202,9 +223,19 @@ body,
 
 .field-error,
 .form-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   color: var(--danger);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  line-height: 18px;
   margin: 0;
+}
+
+.error-icon {
+  width: 14px;
+  height: 14px;
+  flex: none;
 }
 
 button.primary {
@@ -212,14 +243,24 @@ button.primary {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  min-height: 40px;
   background: var(--accent);
   color: white;
   border: 1px solid var(--accent);
   border-radius: var(--radius);
-  padding: 11px 16px;
+  box-shadow: var(--shadow-xs);
+  padding: 9px 16px;
   font: inherit;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
+}
+
+button.primary:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--shadow-xs),
+    0 0 0 4px var(--accent-soft);
 }
 
 button.primary:hover:not(:disabled) {

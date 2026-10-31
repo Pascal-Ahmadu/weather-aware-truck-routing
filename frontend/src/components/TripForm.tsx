@@ -1,3 +1,4 @@
+import { ExclamationCircleIcon } from "@heroicons/react/16/solid";
 import { ArrowRightIcon, ScaleIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
 import { useState, type FormEvent } from "react";
 
@@ -124,6 +125,7 @@ export function TripForm({ isPending, error, onSubmit }: Props) {
 
       {error && Object.keys(error.fieldErrors).length === 0 && (
         <p className="form-error" role="alert">
+          <ExclamationCircleIcon className="error-icon" aria-hidden />
           {error.message}
         </p>
       )}
