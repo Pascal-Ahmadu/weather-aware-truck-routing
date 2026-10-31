@@ -88,6 +88,7 @@ frontend/           React 19 + TypeScript + Vite · TanStack Query · react-leaf
                     ForecastSlider, RiskLegend, RiskBadge
 docs/ENGINEERING_GUIDELINES.md   the standards this code is held to
 docs/DESIGN_GUIDE.md             tokens, components and map-card spec the UI follows
+docs/DECISIONS.md                every judgment call, the alternative, and why
 infra/aws/deploy.sh              one-shot App Runner + Amplify deployment
 ```
 
@@ -120,9 +121,12 @@ destinations also accept `lat,lon`.
 ```bash
 cd backend && pytest -q && ruff check . && ruff format --check .
 cd frontend && npm run typecheck && npm run lint && npm test && npm run build
+cd frontend && npx playwright install chromium && npm run e2e   # browser flows against the production build, API mocked
 ```
 
-CI (`.github/workflows/ci.yml`) runs exactly these plus a Django boot check.
+CI (`.github/workflows/ci.yml`) runs exactly these plus a Django boot check. The
+end-to-end suite covers the plan → results → select → slider flow, location
+search with picked coordinates, client-side validation, and the phone layout.
 
 ## API
 
