@@ -1,3 +1,4 @@
+import { PencilSquareIcon } from "@heroicons/react/20/solid";
 import { TruckIcon } from "@heroicons/react/24/outline";
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -8,7 +9,8 @@ import { RiskBadge } from "./components/RiskBadge";
 import { RiskLegend } from "./components/RiskLegend";
 import { RouteList } from "./components/RouteList";
 import { RouteMap } from "./components/RouteMap";
-import { TripForm, type TripPreset } from "./components/TripForm";
+import { TripDialog } from "./components/TripDialog";
+import type { TripPreset } from "./components/TripForm";
 import { usePlanTrip } from "./hooks/usePlanTrip";
 import type { PlanRequest } from "./lib/api";
 import { buildCorridorSegments } from "./lib/corridor";
@@ -28,6 +30,7 @@ export default function App() {
   const [hour, setHour] = useState(0);
   const [showHeatmap, setShowHeatmap] = useState(true);
   const [preset, setPreset] = useState<TripPreset | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(true);
   const startedAt = useRef(0);
 
   const result = plan.data ?? null;
@@ -51,6 +54,7 @@ export default function App() {
 
   const submit = useCallback(
     (request: PlanRequest) => {
+      setDialogOpen(false);
       setSelectedId(null);
       setHour(0);
       startedAt.current = Date.now();
@@ -83,11 +87,19 @@ export default function App() {
             <TruckIcon className="title-icon" aria-hidden />
             Weather-Aware Truck Routing
           </h1>
+          <button type="button" className="secondary" onClick={() => setDialogOpen(true)}>
+            <PencilSquareIcon className="btn-icon" aria-hidden />
+            {result ? "Change trip" : "Plan a trip"}
+          </button>
         </header>
 
-        <TripForm isPending={plan.isPending} error={plan.error} preset={preset} onSubmit={submit} />
-
         {plan.isPending && <PlanningProgress startedAt={startedAt.current} />}
+
+        {plan.error && !plan.isPending && !result && (
+          <div className="sidebar-error" role="alert">
+            {plan.error.message}
+          </div>
+        )}
 
         {result && !plan.isPending && (
           <section className="results">
@@ -144,6 +156,15 @@ export default function App() {
           <div className="map-overlay center map-hint">Routes, checkpoints and the weather corridor appear here.</div>
         )}
       </main>
+
+      <TripDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        isPending={plan.isPending}
+        error={plan.error}
+        preset={preset}
+        onSubmit={submit}
+      />
     </div>
   );
 }

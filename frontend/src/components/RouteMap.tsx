@@ -197,10 +197,8 @@ function FitToRoutes({ routes }: { routes: PlannedRoute[] }) {
   }, [routes]);
 
   useEffect(() => {
-    if (!bounds) return;
-    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (reduceMotion) map.fitBounds(bounds, { padding: [48, 48] });
-    else map.flyToBounds(bounds, { padding: [48, 48], duration: 0.9 });
+    // Instant fit: an animated fly shows scaled, blurry tiles for its whole duration on a slow tile server.
+    if (bounds) map.fitBounds(bounds, { padding: [48, 48], animate: false });
   }, [map, bounds]);
 
   return null;
