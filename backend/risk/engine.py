@@ -1,6 +1,6 @@
 """Pure risk classification. No I/O — every function here is a table lookup.
 
-Boundary convention (see docs/ENGINEERING_GUIDELINES.md §5.1): a value that sits
+Boundary convention (see README, "Decisions"): a value that sits
 exactly on a shared boundary belongs to the more severe bucket (25 mph is
 Moderate, 0.25 in/hr rain is High). The one exception is written explicitly in
 the spec: rain/snow "No Travel" is strictly greater than the Severe ceiling, so

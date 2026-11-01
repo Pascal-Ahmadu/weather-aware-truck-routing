@@ -1,6 +1,6 @@
 """Pure route ranking. Takes already-classified checkpoints, returns an ordering.
 
-Ranking (docs/ENGINEERING_GUIDELINES.md §5.2): No Travel miles are a hard
+Ranking (see README, "Decisions"): No Travel miles are a hard
 constraint and sort first; then the spec's four criteria in order — fewest
 Severe miles, fewest High miles, lowest distance-weighted average risk,
 shortest travel time.

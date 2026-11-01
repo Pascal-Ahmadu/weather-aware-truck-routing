@@ -86,9 +86,6 @@ frontend/           React 19 + TypeScript + Vite · TanStack Query · react-leaf
   src/lib/          API client/types, risk colours, corridor segment builder (+ tests), form schema
   src/components/   TripForm (+ ui/ DateTimeField, SelectField, Field), RouteList, RouteMap, CorridorHeatLayer,
                     ForecastSlider, RiskLegend, RiskBadge
-docs/ENGINEERING_GUIDELINES.md   the standards this code is held to
-docs/DESIGN_GUIDE.md             tokens, components and map-card spec the UI follows
-docs/DECISIONS.md                every judgment call, the alternative, and why
 infra/aws/ec2-setup.sh           one-command EC2 provisioning (Docker + Caddy TLS) — the live setup
 infra/aws/deploy.sh              alternative: one-shot App Runner + Amplify deployment
 ```
@@ -235,6 +232,59 @@ Importing the repo into Vercel detects two projects. Configure them as:
 `backend/vercel.json` routes every path to Django's WSGI app as a Python
 function. Expect a 1–2 s cold start after idle; the in-process weather cache
 does not persist between invocations (correctness is unaffected).
+
+## Decisions
+
+The judgment calls behind the build, each with the alternative and why it lost.
+
+**Risk engine**
+- Shared boundary values go to the more severe bucket (25 mph is Moderate, 0.25 in/hr
+  rain is High), matching how the wind row is written. The spec writes rain/snow No
+  Travel as strictly `>`, so 1.00 in/hr stays Severe. Every boundary is a test.
+- A checkpoint is the worst of wind, rain and snow; the load rules only ever escalate
+  — heavy snow at 40 mph with a 50,000 lb load stays No Travel.
+- Load weight is the payload the driver enters; routing uses payload + a 33,000 lb
+  tractor/trailer tare (`TRUCK_TARE_LB`). Height/width are not sent because the brief
+  gives no vehicle dimensions.
+
+**Sampling and ETAs**
+- "Every 10 / 25 / 50 miles" is a selectable spacing (default 25), not three
+  simultaneous samplings, which would triple the weather calls for no extra decision.
+- ETAs come from the router's per-step durations, so a slow mountain stretch pushes
+  every later ETA back and changes which forecast hour each checkpoint reads.
+- Each checkpoint reads the forecast hour nearest its ETA; the whole 0–48 h series is
+  classified server-side so the slider is an array lookup and never fetches.
+- Missing forecast data is Unknown, excluded from averages, never defaulted to Low.
+
+**Ranking**
+- Strict lexicographic order as specified — Severe miles, High miles, average risk,
+  time — rather than a weighted score, which would let many High miles outrank a few
+  Severe ones.
+- No Travel miles are a hard gate ahead of the four criteria; "No Travel" is not
+  merely "worse than Severe".
+- A checkpoint's risk applies to the miles until the next checkpoint; the destination
+  covers zero. Simpler to explain than half-segments either side, with no accuracy
+  gain at 10–50 mile spacing.
+- The recommendation's one-line reason is generated from the same numbers the ranker
+  used, so it cannot disagree with the ranking.
+
+**Routing and data**
+- OpenRouteService `driving-hgv` with the gross weight as a restriction; OSRM car as
+  the keyless fallback, labelled as such in the response and UI.
+- Alternatives come from detour waypoints filtered for overlap (< 80 % shared road),
+  duration (≤ 1.5× primary) and out-and-back spurs; fewer than three are shown
+  honestly rather than padded.
+- Open-Meteo returns mph/inch natively and the full hourly window per location in one
+  call. Photon for type-ahead (Nominatim's policy forbids autocomplete), Nominatim for
+  final geocoding.
+
+**Interface**
+- One screen; no login, history or second page.
+- The heatmap paints each road segment in the exact risk colour for the selected hour
+  — a density heatmap stacks overlapping checkpoints and can render a Low corridor as
+  Severe.
+- Map fit is instant and selection only pans, because animated zooms show scaled,
+  blurry tiles on a slow tile server.
 
 ## Known limitations
 
